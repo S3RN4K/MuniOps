@@ -1,0 +1,154 @@
+INSTRUCCIONES DE INSTALACIÓN - MuniOps
+==========================================
+
+Sigue estos pasos para instalar MuniOps en tu servidor local:
+
+PASO 1: REQUISITOS PREVIOS
+---------------------------
+✓ XAMPP, WAMP o LAMP instalado
+✓ PHP 7.4 o superior
+✓ MySQL 5.7 o superior
+✓ Navegador web moderno
+
+PASO 2: DESCARGAR EL PROYECTO
+------------------------------
+1. Descarga o clona el proyecto en:
+   - Windows: C:\xampp\htdocs\MuniOps
+   - Mac: /Applications/XAMPP/htdocs/MuniOps
+   - Linux: /opt/lampp/htdocs/MuniOps
+
+PASO 3: CREAR LA BASE DE DATOS
+-------------------------------
+1. Inicia Apache y MySQL desde el panel de XAMPP
+2. Abre tu navegador y ve a: http://localhost/phpmyadmin
+3. Haz clic en "Nueva" para crear una base de datos
+4. Nombre de la base de datos: muniops
+5. Cotejamiento: utf8mb4_unicode_ci
+6. Haz clic en "Crear"
+7. Selecciona la base de datos "muniops"
+8. Ve a la pestaña "Importar"
+9. Haz clic en "Elegir archivo"
+10. Selecciona: MuniOps/database/muniops.sql
+11. Haz clic en "Continuar" al final de la página
+12. Espera a que termine la importación
+
+PASO 4: CONFIGURAR LA CONEXIÓN
+-------------------------------
+1. Abre el archivo: config/database.php
+2. Verifica que los datos sean correctos:
+   - DB_HOST: localhost
+   - DB_USER: root
+   - DB_PASS: (vacío por defecto en XAMPP)
+   - DB_NAME: muniops
+3. Guarda el archivo si hiciste cambios
+
+PASO 5: CONFIGURAR LA API DE DNI (OPCIONAL)
+-------------------------------------------
+1. Visita: https://apisperu.com/ o https://apis.net.pe/
+2. Regístrate y obtén tu token gratuito
+3. Abre el archivo: config/config.php
+4. Busca la línea: define('API_DNI_TOKEN', '...');
+5. Reemplaza el token con el tuyo
+6. Guarda el archivo
+
+NOTA: El sistema funciona sin la API, pero no podrá
+autocompletar los datos del DNI al registrarse.
+
+PASO 6: CONFIGURAR PERMISOS (Linux/Mac)
+----------------------------------------
+Abre una terminal y ejecuta:
+
+cd /ruta/a/MuniOps
+chmod -R 755 .
+chmod -R 777 uploads/
+
+PASO 7: ACCEDER AL SISTEMA
+---------------------------
+1. Abre tu navegador web
+2. Ve a: http://localhost/MuniOps/
+3. Deberías ver la página de inicio de MuniOps
+
+PASO 8: PROBAR EL LOGIN DE ADMINISTRADOR
+----------------------------------------
+Credenciales por defecto:
+- DNI: 12345678
+- Contraseña: admin123
+
+IMPORTANTE: Cambia esta contraseña después del primer acceso.
+
+PASO 9: CREAR TU PRIMER USUARIO CIUDADANO
+-----------------------------------------
+1. Haz clic en "Registrarse"
+2. Ingresa un DNI válido (8 dígitos)
+3. Haz clic en "Consultar" para autocompletar datos (si configuraste la API)
+4. Completa el formulario
+5. Crea una contraseña
+6. Haz clic en "Crear Cuenta"
+
+PASO 10: CREAR TU PRIMERA PROPUESTA (Como Admin)
+------------------------------------------------
+1. Inicia sesión como administrador
+2. Ve a "Admin" en el menú
+3. Haz clic en "Nueva Propuesta"
+4. Completa el formulario:
+   - Título: "Mejora del Parque Central"
+   - Descripción: Describe la propuesta
+   - Categoría: Infraestructura
+   - Estado: Activa
+   - Fechas: Define inicio y fin
+5. Sube una imagen (opcional)
+6. Haz clic en "Guardar"
+
+¡LISTO! Tu sistema MuniOps está funcionando.
+
+VERIFICACIÓN DE INSTALACIÓN
+----------------------------
+Verifica que todo funcione correctamente:
+
+□ Página de inicio carga sin errores
+□ Puedes registrar un nuevo usuario
+□ Puedes iniciar sesión
+□ Puedes ver las propuestas
+□ Puedes votar en una propuesta
+□ Puedes comentar en una propuesta
+□ El ranking se muestra correctamente
+□ El panel de admin es accesible
+□ Puedes crear propuestas desde el admin
+
+SOLUCIÓN DE PROBLEMAS COMUNES
+-------------------------------
+
+Problema: "Error de conexión a la base de datos"
+Solución: 
+- Verifica que MySQL esté corriendo en XAMPP
+- Revisa las credenciales en config/database.php
+- Asegúrate de haber importado el archivo SQL
+
+Problema: "No se pueden subir imágenes"
+Solución:
+- Verifica permisos de la carpeta uploads/
+- En Windows: Clic derecho > Propiedades > Seguridad
+- Dale permisos completos a la carpeta
+
+Problema: "Página en blanco"
+Solución:
+- Activa la visualización de errores en php.ini
+- Busca: display_errors = Off
+- Cambia a: display_errors = On
+- Reinicia Apache
+
+Problema: "API DNI no funciona"
+Solución:
+- Verifica tu token en config/config.php
+- Prueba el token directamente en el navegador
+- El sistema funciona sin la API
+
+PARA MÁS AYUDA
+--------------
+Consulta el archivo README.md para documentación completa.
+
+¿Necesitas soporte?
+- GitHub Issues: https://github.com/S3RN4K/MuniOps/issues
+
+==========================================
+¡Gracias por usar MuniOps!

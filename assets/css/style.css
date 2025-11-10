@@ -1,0 +1,345 @@
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f5f7fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Navbar Styles */
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.nav-link {
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    transform: translateY(-2px);
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.card-title {
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+/* Propuesta Card */
+.propuesta-card {
+    margin-bottom: 20px;
+}
+
+.propuesta-card .badge {
+    font-size: 0.8rem;
+    padding: 5px 10px;
+}
+
+.propuesta-progress {
+    height: 8px;
+    border-radius: 10px;
+}
+
+/* Button Styles */
+.btn {
+    border-radius: 10px;
+    font-weight: 500;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-vote {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+}
+
+.btn-vote:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    color: white;
+}
+
+.btn-vote:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 80px 0;
+    border-radius: 0 0 50% 50% / 0 0 20px 20px;
+}
+
+.hero-section h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.hero-section p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+}
+
+/* Stats Cards */
+.stats-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.stats-card i {
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+.stats-card h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.stats-card p {
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Ranking Table */
+.ranking-table {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.ranking-table .table {
+    margin: 0;
+}
+
+.ranking-table .position-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.position-1 {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: white;
+}
+
+.position-2 {
+    background: linear-gradient(135deg, #C0C0C0 0%, #808080 100%);
+    color: white;
+}
+
+.position-3 {
+    background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%);
+    color: white;
+}
+
+/* Comentarios */
+.comment-box {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.comment-time {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.comment-text {
+    margin: 10px 0;
+}
+
+.comment-actions button {
+    font-size: 0.9rem;
+    padding: 5px 15px;
+}
+
+.reply-box {
+    margin-left: 40px;
+    border-left: 3px solid var(--primary-color);
+    padding-left: 15px;
+}
+
+/* Recompensas */
+.recompensa-card {
+    text-align: center;
+    padding: 20px;
+}
+
+.recompensa-icon {
+    font-size: 4rem;
+    margin-bottom: 15px;
+}
+
+.recompensa-unlocked {
+    opacity: 1;
+}
+
+.recompensa-locked {
+    opacity: 0.4;
+    filter: grayscale(100%);
+}
+
+/* Login/Register Forms */
+.auth-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    max-width: 500px;
+    width: 100%;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.auth-header i {
+    font-size: 4rem;
+    color: var(--primary-color);
+}
+
+/* Progress Bar */
+.progress {
+    border-radius: 10px;
+    height: 10px;
+}
+
+/* Badges */
+.badge {
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-weight: 500;
+}
+
+/* Avatar */
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+/* Loading Spinner */
+.spinner-custom {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+    
+    .hero-section p {
+        font-size: 1rem;
+    }
+    
+    .stats-card {
+        margin-bottom: 20px;
+    }
+}
+
+/* Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease;
+}
+
+/* Category Colors */
+.categoria-infraestructura { background-color: #0dcaf0; }
+.categoria-salud { background-color: #dc3545; }
+.categoria-educacion { background-color: #0d6efd; }
+.categoria-seguridad { background-color: #fd7e14; }
+.categoria-medio_ambiente { background-color: #198754; }
+.categoria-deporte { background-color: #6610f2; }
+.categoria-cultura { background-color: #d63384; }
+.categoria-otros { background-color: #6c757d; }
