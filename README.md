@@ -293,15 +293,3 @@ Edita `assets/css/style.css` para cambiar colores, fuentes y diseño.
 - Verifica que las transacciones no fallen
 - Consulta logs de PHP para errores
 
-## 📞 Soporte
-
-Para reportar problemas o sugerencias, visita:
-- Issues: https://github.com/S3RN4K/MuniOps/issues
-
-## 📄 Licencia
-
-Este proyecto fue desarrollado para fines educativos y de demostración.
-
-**¡Gracias por usar MuniOps! 🎉**
-
-*Construyendo comunidades más participativas y conectadas.*
