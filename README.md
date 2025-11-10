@@ -302,19 +302,6 @@ Para reportar problemas o sugerencias, visita:
 
 Este proyecto fue desarrollado para fines educativos y de demostración.
 
-## 🔄 Actualizaciones Futuras
-
-- [ ] Sistema de notificaciones por email
-- [ ] Integración con redes sociales
-- [ ] App móvil
-- [ ] Sistema de encuestas
-- [ ] Chat en vivo entre usuarios
-- [ ] Módulo de seguimiento de propuestas implementadas
-- [ ] Dashboard con gráficos interactivos
-- [ ] Exportación de reportes a PDF/Excel
-
----
-
 **¡Gracias por usar MuniOps! 🎉**
 
 *Construyendo comunidades más participativas y conectadas.*
