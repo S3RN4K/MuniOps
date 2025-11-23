@@ -19,10 +19,18 @@ $pageTitle = $propuesta['titulo'] . ' - MuniOps';
 // Procesar voto
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'votar') {
     if ($propuesta['estado'] === 'activa' && $propuesta['dias_restantes'] > 0) {
+        // Validar que el usuario sea del mismo municipio
+        $voteValidation = canUserVotePropuesta(getUserId(), $propuestaId);
+        
+        if (!$voteValidation['canVote']) {
+            setFlashMessage('❌ ' . $voteValidation['reason'], 'danger');
+            redirect('propuesta-detalle.php?id=' . $propuestaId);
+        }
+        
         if (!hasVoted(getUserId(), $propuestaId)) {
             $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
             if (registerVote(getUserId(), $propuestaId, $ipAddress)) {
-                setFlashMessage('¡Gracias por tu voto! Has ganado ' . PUNTOS_VOTO . ' puntos', 'success');
+                setFlashMessage('✓ ¡Gracias por tu voto! Has ganado ' . PUNTOS_VOTO . ' puntos', 'success');
                 redirect('propuesta-detalle.php?id=' . $propuestaId);
             } else {
                 setFlashMessage('Error al registrar tu voto', 'danger');

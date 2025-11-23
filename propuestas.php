@@ -15,6 +15,13 @@ $estado = $_GET['estado'] ?? 'activa';
 $sql = "SELECT * FROM propuestas_estadisticas WHERE 1=1";
 $params = [];
 
+// Filtrar por municipio del usuario
+$usuario = getUserById(getUserId());
+if ($usuario && $usuario['municipio_id']) {
+    $sql .= " AND municipio_id = ?";
+    $params[] = $usuario['municipio_id'];
+}
+
 if ($categoria !== 'todas') {
     $sql .= " AND categoria = ?";
     $params[] = $categoria;
@@ -52,6 +59,12 @@ include 'includes/header.php';
                 <i class="bi bi-lightbulb"></i> Propuestas Ciudadanas
             </h1>
             <p class="text-muted">Vota por las propuestas que transformarán tu comunidad</p>
+            <?php if ($usuario && $usuario['municipio_id']): ?>
+                <?php $muni = getMunicipioById($usuario['municipio_id']); ?>
+                <div class="alert alert-info mt-2 mb-0" style="max-width: 400px;">
+                    <i class="bi bi-info-circle"></i> Viendo propuestas de: <strong><?php echo htmlspecialchars($muni['nombre']); ?></strong>
+                </div>
+            <?php endif; ?>
         </div>
         <div class="col-md-4 text-end">
             <div class="card bg-primary text-white">
