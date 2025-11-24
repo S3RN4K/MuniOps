@@ -11,6 +11,9 @@ $pageTitle = 'Gestión de Propuestas - MuniOps';
 $action = $_GET['action'] ?? 'list';
 $propuestaId = $_GET['id'] ?? 0;
 
+// Cargar municipios
+$municipios = getAllMunicipios();
+
 // Procesar acciones
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
@@ -20,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $titulo = sanitizeInput($_POST['titulo'] ?? '');
                 $descripcion = sanitizeInput($_POST['descripcion'] ?? '');
                 $categoria = $_POST['categoria'] ?? 'otros';
+                $municipio_id = (int)($_POST['municipio_id'] ?? 0);
                 $presupuesto = $_POST['presupuesto_estimado'] ?? null;
                 $fechaInicio = $_POST['fecha_inicio'] ?? date('Y-m-d H:i:s');
                 $fechaFin = $_POST['fecha_fin'] ?? date('Y-m-d H:i:s', strtotime('+30 days'));
@@ -34,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'titulo' => $titulo,
                     'descripcion' => $descripcion,
                     'categoria' => $categoria,
+                    'municipio_id' => $municipio_id,
                     'imagen' => $imagen,
                     'presupuesto_estimado' => $presupuesto,
                     'fecha_inicio' => $fechaInicio,
@@ -245,6 +250,21 @@ include '../includes/header.php';
                                             </select>
                                         </div>
                                         
+                                        <div class="col-md-6 mb-3">
+                                            <label for="municipio_id" class="form-label fw-bold">Municipio *</label>
+                                            <select class="form-select" id="municipio_id" name="municipio_id" required>
+                                                <option value="">-- Selecciona municipio --</option>
+                                                <?php foreach ($municipios as $muni): ?>
+                                                    <option value="<?php echo $muni['id']; ?>" 
+                                                        <?php echo ($propuesta['municipio_id'] ?? 0) == $muni['id'] ? 'selected' : ''; ?>>
+                                                        <?php echo htmlspecialchars($muni['nombre']) . ' (' . htmlspecialchars($muni['departamento']) . ')'; ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="presupuesto_estimado" class="form-label fw-bold">Presupuesto Estimado (S/.)</label>
                                             <input type="number" 

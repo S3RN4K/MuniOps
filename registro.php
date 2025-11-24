@@ -16,6 +16,9 @@ $error = '';
 $success = '';
 $dniData = null;
 
+// Cargar municipios
+$municipios = getAllMunicipios();
+
 // Procesar consulta de DNI via AJAX
 if (isset($_GET['consultar_dni'])) {
     header('Content-Type: application/json');
@@ -50,11 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $apellido_materno = sanitizeInput($_POST['apellido_materno'] ?? '');
     $email = sanitizeInput($_POST['email'] ?? '');
     $telefono = sanitizeInput($_POST['telefono'] ?? '');
+    $municipio_id = (int)($_POST['municipio_id'] ?? 0);
     $password = $_POST['password'] ?? '';
     $password_confirm = $_POST['password_confirm'] ?? '';
     
     // Validaciones
-    if (empty($dni) || empty($nombres) || empty($apellido_paterno) || empty($apellido_materno) || empty($email) || empty($password)) {
+    if (empty($dni) || empty($nombres) || empty($apellido_paterno) || empty($apellido_materno) || empty($email) || empty($password) || empty($municipio_id)) {
         $error = 'Por favor, completa todos los campos obligatorios';
     } elseif (!validarDNI($dni)) {
         $error = 'DNI inválido. Debe tener 8 dígitos';
@@ -79,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'apellido_materno' => $apellido_materno,
                 'email' => $email,
                 'telefono' => $telefono,
+                'municipio_id' => $municipio_id,
                 'password' => $password
             ];
             
@@ -219,7 +224,21 @@ include 'includes/header.php';
                                            placeholder="999999999"
                                            maxlength="9">
                                 </div>
-                            </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="municipio_id" class="form-label fw-bold">
+                                        <i class="bi bi-geo-alt"></i> Municipio <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-control" id="municipio_id" name="municipio_id" required>
+                                        <option value="">-- Selecciona tu municipio --</option>
+                                        <?php foreach ($municipios as $muni): ?>
+                                            <option value="<?php echo $muni['id']; ?>">
+                                                <?php echo htmlspecialchars($muni['nombre']) . ' (' . htmlspecialchars($muni['departamento']) . ')'; ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <small class="text-muted">Solo podrás votar propuestas de tu municipio</small>
+                                </div>
                             
                             <div class="row">
                                 <div class="col-md-6 mb-3">

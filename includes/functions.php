@@ -16,8 +16,8 @@ function createUser($data) {
     $pdo = getConnection();
     
     $sql = "INSERT INTO usuarios (dni, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, 
-            sexo, direccion, email, telefono, password, rol) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            sexo, municipio_id, direccion, email, telefono, password, rol) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     try {
         $stmt = $pdo->prepare($sql);
@@ -28,6 +28,7 @@ function createUser($data) {
             $data['apellido_materno'],
             $data['fecha_nacimiento'] ?? null,
             $data['sexo'] ?? null,
+            $data['municipio_id'] ?? null,
             $data['direccion'] ?? null,
             $data['email'],
             $data['telefono'] ?? null,
@@ -76,9 +77,9 @@ function createPropuesta($data) {
     // Usar la misma conexión para insert y lastInsertId
     $pdo = getConnection();
     
-    $sql = "INSERT INTO propuestas (titulo, descripcion, categoria, imagen, presupuesto_estimado, 
+    $sql = "INSERT INTO propuestas (titulo, descripcion, categoria, imagen, municipio_id, presupuesto_estimado, 
             fecha_inicio, fecha_fin, estado, creado_por) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     try {
         $stmt = $pdo->prepare($sql);
@@ -87,6 +88,7 @@ function createPropuesta($data) {
             $data['descripcion'],
             $data['categoria'],
             $data['imagen'] ?? null,
+            $data['municipio_id'] ?? null,
             $data['presupuesto_estimado'] ?? null,
             $data['fecha_inicio'],
             $data['fecha_fin'],
@@ -102,7 +104,7 @@ function createPropuesta($data) {
 }
 
 function updatePropuesta($id, $data) {
-    $sql = "UPDATE propuestas SET titulo = ?, descripcion = ?, categoria = ?, 
+    $sql = "UPDATE propuestas SET titulo = ?, descripcion = ?, categoria = ?, municipio_id = ?,
             presupuesto_estimado = ?, fecha_inicio = ?, fecha_fin = ?, estado = ? 
             WHERE id = ?";
     
@@ -110,6 +112,7 @@ function updatePropuesta($id, $data) {
         $data['titulo'],
         $data['descripcion'],
         $data['categoria'],
+        $data['municipio_id'] ?? null,
         $data['presupuesto_estimado'] ?? null,
         $data['fecha_inicio'],
         $data['fecha_fin'],
@@ -358,5 +361,84 @@ function uploadImage($file, $subfolder = 'propuestas') {
     }
     
     return false;
+}
+
+// ===== FUNCIONES DE MUNICIPIOS =====
+
+// Obtener todos los municipios
+function getAllMunicipios() {
+    return fetchAll("SELECT * FROM municipios ORDER BY departamento, nombre");
+}
+
+// Obtener municipio por ID
+function getMunicipioById($id) {
+    return fetchOne("SELECT * FROM municipios WHERE id = ?", [$id]);
+}
+
+// Validar que el usuario pueda votar en una propuesta (mismo municipio)
+function canUserVotePropuesta($userId, $propuestaId) {
+    // Obtener municipio del usuario
+    $user = getUserById($userId);
+    if (!$user || !$user['municipio_id']) {
+        return ['canVote' => false, 'reason' => 'Usuario sin municipio asignado'];
+    }
+    
+    // Obtener municipio de la propuesta
+    $propuesta = fetchOne("SELECT municipio_id FROM propuestas WHERE id = ?", [$propuestaId]);
+    if (!$propuesta || !$propuesta['municipio_id']) {
+        return ['canVote' => false, 'reason' => 'Propuesta sin municipio asignado'];
+    }
+    
+    // Comparar municipios
+    if ($user['municipio_id'] != $propuesta['municipio_id']) {
+        $userMuni = getMunicipioById($user['municipio_id']);
+        $propuestaMuni = getMunicipioById($propuesta['municipio_id']);
+        return [
+            'canVote' => false,
+            'reason' => "Solo puedes votar propuestas de tu municipio ({$userMuni['nombre']}). Esta propuesta es de {$propuestaMuni['nombre']}"
+        ];
+    }
+    
+    return ['canVote' => true];
+}
+
+// Filtrar propuestas por municipio del usuario
+function getActivePropuestasByUserMunicipio($userId, $limit = null) {
+    $user = getUserById($userId);
+    
+    if (!$user || !$user['municipio_id']) {
+        return [];
+    }
+    
+    $sql = "SELECT * FROM propuestas_estadisticas 
+            WHERE estado = 'activa' 
+            AND fecha_fin >= NOW()
+            AND municipio_id = ?
+            ORDER BY fecha_inicio DESC";
+    
+    if ($limit) {
+        $sql .= " LIMIT " . (int)$limit;
+    }
+    
+    return fetchAll($sql, [$user['municipio_id']]);
+}
+
+// Obtener municipios con más propuestas activas
+function getMunicipiosWithStats() {
+    return fetchAll("
+        SELECT 
+            m.id,
+            m.nombre,
+            m.departamento,
+            m.provincia,
+            COUNT(p.id) as total_propuestas,
+            SUM(CASE WHEN p.estado = 'activa' AND p.fecha_fin >= NOW() THEN 1 ELSE 0 END) as propuestas_activas,
+            COUNT(DISTINCT v.usuario_id) as total_votantes
+        FROM municipios m
+        LEFT JOIN propuestas p ON p.municipio_id = m.id
+        LEFT JOIN votos v ON v.propuesta_id = p.id
+        GROUP BY m.id, m.nombre, m.departamento, m.provincia
+        ORDER BY propuestas_activas DESC, m.nombre
+    ");
 }
 ?>

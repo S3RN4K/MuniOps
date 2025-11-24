@@ -1,0 +1,70 @@
+# Configuración personal (NO PUBLICAR)
+config/config.php
+config/database.php
+
+# Archivos de prueba personal
+test-api-dni.php
+test-conexion.php
+diagnostico-admin.php
+verificar-municipios.php
+import-db.php
+
+# Archivos de configuración de Apache/MySQL (cambios de puertos, etc)
+.htaccess
+httpd.conf
+my.ini
+my.cnf
+
+# Logs
+*.log
+logs/
+error.log
+access.log
+
+# Caché
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# Node (si se usa)
+node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Uploads (contenido generado en tiempo de ejecución)
+uploads/*
+!uploads/.gitkeep
+
+# Base de datos
+*.sql.bak
+database/muniops.sql.bak
+database/upgrade-municipios.sql.bak
+database/recrear-vista.sql.bak
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+
+# Archivos temporales de sistema
+.turbo/
+dist/
+build/
+
+# Scripts personales de setup
+setup-municipios.php
+crear-admin.php
+
+# Archivos de sesión PHP
+session/
+tmp/
+temp/
