@@ -63,6 +63,9 @@ include '../includes/header.php';
                 <a href="propuestas.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-lightbulb"></i> Propuestas
                 </a>
+                <a href="votaciones.php" class="list-group-item list-group-item-action">
+                    <i class="bi bi-box-arrow-in-right"></i> Votaciones
+                </a>
                 <a href="usuarios.php" class="list-group-item list-group-item-action active">
                     <i class="bi bi-people"></i> Usuarios
                 </a>

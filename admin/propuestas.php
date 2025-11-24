@@ -29,6 +29,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $fechaFin = $_POST['fecha_fin'] ?? date('Y-m-d H:i:s', strtotime('+30 days'));
                 $estado = $_POST['estado'] ?? 'borrador';
                 
+                // Validar estado para crear: solo borrador o activa
+                if ($_POST['action'] === 'create' && !in_array($estado, ['borrador', 'activa'])) {
+                    setFlashMessage('Al crear una propuesta solo se permite estado Borrador o Activa', 'danger');
+                    redirect('admin/propuestas.php?action=create');
+                    exit;
+                }
+                
                 $imagen = null;
                 if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
                     $imagen = uploadImage($_FILES['imagen'], 'propuestas');
@@ -76,8 +83,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Obtener propuestas
+$tab = $_GET['tab'] ?? 'todas';
 if ($action === 'list') {
-    $propuestas = fetchAll("SELECT * FROM propuestas ORDER BY fecha_creacion DESC");
+    if ($tab === 'ganadoras') {
+        $propuestas = getPropuestasGanadoras();
+    } else {
+        $propuestas = fetchAll("SELECT * FROM propuestas ORDER BY fecha_creacion DESC");
+    }
 } elseif ($action === 'edit' && $propuestaId) {
     $propuesta = getPropuestaById($propuestaId);
     if (!$propuesta) {
@@ -99,6 +111,9 @@ include '../includes/header.php';
                 </a>
                 <a href="propuestas.php" class="list-group-item list-group-item-action active">
                     <i class="bi bi-lightbulb"></i> Propuestas
+                </a>
+                <a href="votaciones.php" class="list-group-item list-group-item-action">
+                    <i class="bi bi-box-arrow-in-right"></i> Votaciones
                 </a>
                 <a href="usuarios.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-people"></i> Usuarios
@@ -129,6 +144,20 @@ include '../includes/header.php';
                     </a>
                 </div>
                 
+                <!-- Tabs -->
+                <ul class="nav nav-tabs mb-3">
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo $tab === 'todas' ? 'active' : ''; ?>" href="propuestas.php?tab=todas">
+                            <i class="bi bi-list-ul"></i> Todas las Propuestas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo $tab === 'ganadoras' ? 'active' : ''; ?>" href="propuestas.php?tab=ganadoras">
+                            <i class="bi bi-trophy-fill"></i> Propuestas Ganadoras
+                        </a>
+                    </li>
+                </ul>
+                
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
@@ -139,6 +168,9 @@ include '../includes/header.php';
                                         <th>Título</th>
                                         <th>Categoría</th>
                                         <th>Estado</th>
+                                        <?php if ($tab === 'ganadoras'): ?>
+                                            <th>Seguimiento</th>
+                                        <?php endif; ?>
                                         <th>Votos</th>
                                         <th>Fecha Inicio</th>
                                         <th>Fecha Fin</th>
@@ -151,6 +183,11 @@ include '../includes/header.php';
                                             <td><?php echo $p['id']; ?></td>
                                             <td>
                                                 <strong><?php echo htmlspecialchars($p['titulo']); ?></strong>
+                                                <?php if ($p['es_ganadora'] == 1): ?>
+                                                    <span class="badge bg-success ms-2">
+                                                        <i class="bi bi-trophy-fill"></i> Ganadora
+                                                    </span>
+                                                <?php endif; ?>
                                             </td>
                                             <td>
                                                 <span class="badge categoria-<?php echo $p['categoria']; ?>">
@@ -162,6 +199,14 @@ include '../includes/header.php';
                                                     <?php echo ucfirst($p['estado']); ?>
                                                 </span>
                                             </td>
+                                            <?php if ($tab === 'ganadoras'): ?>
+                                                <td>
+                                                    <a href="seguimiento-propuesta.php?id=<?php echo $p['id']; ?>" 
+                                                       class="btn btn-sm btn-success">
+                                                        <i class="bi bi-clipboard-check"></i> Ver Seguimiento
+                                                    </a>
+                                                </td>
+                                            <?php endif; ?>
                                             <td><?php echo number_format($p['total_votos']); ?></td>
                                             <td><?php echo formatDate($p['fecha_inicio']); ?></td>
                                             <td><?php echo formatDate($p['fecha_fin']); ?></td>
@@ -296,12 +341,22 @@ include '../includes/header.php';
                                     <div class="mb-3">
                                         <label for="estado" class="form-label fw-bold">Estado *</label>
                                         <select class="form-select" id="estado" name="estado" required>
-                                            <option value="borrador" <?php echo ($propuesta['estado'] ?? '') === 'borrador' ? 'selected' : ''; ?>>Borrador</option>
-                                            <option value="activa" <?php echo ($propuesta['estado'] ?? '') === 'activa' ? 'selected' : ''; ?>>Activa</option>
-                                            <option value="finalizada" <?php echo ($propuesta['estado'] ?? '') === 'finalizada' ? 'selected' : ''; ?>>Finalizada</option>
-                                            <option value="implementada" <?php echo ($propuesta['estado'] ?? '') === 'implementada' ? 'selected' : ''; ?>>Implementada</option>
-                                            <option value="cancelada" <?php echo ($propuesta['estado'] ?? '') === 'cancelada' ? 'selected' : ''; ?>>Cancelada</option>
+                                            <?php if ($action === 'create'): ?>
+                                                <!-- Solo borrador y activa para crear nuevas propuestas -->
+                                                <option value="borrador" selected>Borrador</option>
+                                                <option value="activa">Activa</option>
+                                            <?php else: ?>
+                                                <!-- Todos los estados para editar -->
+                                                <option value="borrador" <?php echo ($propuesta['estado'] ?? '') === 'borrador' ? 'selected' : ''; ?>>Borrador</option>
+                                                <option value="activa" <?php echo ($propuesta['estado'] ?? '') === 'activa' ? 'selected' : ''; ?>>Activa</option>
+                                                <option value="finalizada" <?php echo ($propuesta['estado'] ?? '') === 'finalizada' ? 'selected' : ''; ?>>Finalizada</option>
+                                                <option value="implementada" <?php echo ($propuesta['estado'] ?? '') === 'implementada' ? 'selected' : ''; ?>>Implementada</option>
+                                                <option value="cancelada" <?php echo ($propuesta['estado'] ?? '') === 'cancelada' ? 'selected' : ''; ?>>Cancelada</option>
+                                            <?php endif; ?>
                                         </select>
+                                        <?php if ($action === 'create'): ?>
+                                            <small class="text-muted">Al crear, solo se permite Borrador o Activa</small>
+                                        <?php endif; ?>
                                     </div>
                                     
                                     <div class="mb-3">
