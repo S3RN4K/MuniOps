@@ -1,7 +1,3 @@
-# Configuración personal (NO PUBLICAR)
-config/config.php
-config/database.php
-
 # Archivos de prueba personal
 test-api-dni.php
 test-conexion.php
