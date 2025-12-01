@@ -36,9 +36,9 @@ package-lock.json
 *.sublime-project
 *.sublime-workspace
 
-# Uploads (contenido generado en tiempo de ejecución)
-uploads/*
-!uploads/.gitkeep
+# # Uploads (contenido generado en tiempo de ejecución)
+# uploads/*
+# !uploads/.gitkeep
 
 # Base de datos
 *.sql.bak
