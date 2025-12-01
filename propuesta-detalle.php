@@ -16,29 +16,11 @@ if (!$propuesta) {
 
 $pageTitle = $propuesta['titulo'] . ' - MuniOps';
 
-// Procesar voto
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'votar') {
-    if ($propuesta['estado'] === 'activa' && $propuesta['dias_restantes'] > 0) {
-        // Validar que el usuario sea del mismo municipio
-        $voteValidation = canUserVotePropuesta(getUserId(), $propuestaId);
-        
-        if (!$voteValidation['canVote']) {
-            setFlashMessage('❌ ' . $voteValidation['reason'], 'danger');
-            redirect('propuesta-detalle.php?id=' . $propuestaId);
-        }
-        
-        if (!hasVoted(getUserId(), $propuestaId)) {
-            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
-            if (registerVote(getUserId(), $propuestaId, $ipAddress)) {
-                setFlashMessage('✓ ¡Gracias por tu voto! Has ganado ' . PUNTOS_VOTO . ' puntos', 'success');
-                redirect('propuesta-detalle.php?id=' . $propuestaId);
-            } else {
-                setFlashMessage('Error al registrar tu voto', 'danger');
-            }
-        } else {
-            setFlashMessage('Ya has votado en esta propuesta', 'warning');
-        }
-    }
+// Verificar si existe una votación activa para esta propuesta
+$votacionActiva = getVotacionActivaByPropuesta($propuestaId);
+$yaVotoEnVotacion = false;
+if ($votacionActiva) {
+    $yaVotoEnVotacion = hasVotedInVotacion(getUserId(), $votacionActiva['id']);
 }
 
 // Procesar comentario
@@ -56,6 +38,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// Procesar seguimiento (solo admins)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'agregar_seguimiento' && isAdmin()) {
+    $titulo = sanitizeInput($_POST['titulo'] ?? '');
+    $descripcion = sanitizeInput($_POST['descripcion'] ?? '');
+    $nuevoEstado = $_POST['estado_propuesta'] ?? null;
+    
+    $imagen = null;
+    $debugInfo = '';
+    
+    if (isset($_FILES['imagen'])) {
+        $debugInfo .= "Archivo detectado. ";
+        $debugInfo .= "Error code: " . $_FILES['imagen']['error'] . ". ";
+        $debugInfo .= "Tamaño: " . ($_FILES['imagen']['size'] ?? 0) . " bytes. ";
+        $debugInfo .= "Nombre: " . ($_FILES['imagen']['name'] ?? 'sin nombre') . ". ";
+        
+        if ($_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+            $debugInfo .= "Intentando subir... ";
+            $imagen = uploadImage($_FILES['imagen'], 'seguimientos');
+            if ($imagen) {
+                $debugInfo .= "Éxito: " . $imagen;
+                setFlashMessage('Imagen subida correctamente: ' . $debugInfo, 'success');
+            } else {
+                $debugInfo .= "Falló uploadImage()";
+                setFlashMessage('Error al subir imagen: ' . $debugInfo, 'danger');
+            }
+        } elseif ($_FILES['imagen']['error'] !== UPLOAD_ERR_NO_FILE) {
+            // Hay un error en el upload
+            $errorMessages = [
+                UPLOAD_ERR_INI_SIZE => 'El archivo excede el tamaño máximo permitido por PHP',
+                UPLOAD_ERR_FORM_SIZE => 'El archivo excede el tamaño máximo del formulario',
+                UPLOAD_ERR_PARTIAL => 'El archivo se subió parcialmente',
+                UPLOAD_ERR_NO_TMP_DIR => 'Falta la carpeta temporal',
+                UPLOAD_ERR_CANT_WRITE => 'Error al escribir el archivo en disco',
+                UPLOAD_ERR_EXTENSION => 'Una extensión de PHP detuvo la subida'
+            ];
+            $errorMsg = $errorMessages[$_FILES['imagen']['error']] ?? 'Error desconocido';
+            setFlashMessage($errorMsg . ' - ' . $debugInfo, 'danger');
+        }
+    } else {
+        $debugInfo = 'No se detectó archivo en $_FILES';
+    }
+    
+    if (!empty($titulo) && !empty($descripcion)) {
+        // Crear seguimiento
+        if (createSeguimiento($propuestaId, $titulo, $descripcion, $imagen, getUserId())) {
+            // Actualizar estado de la propuesta si se proporcionó
+            if ($nuevoEstado && in_array($nuevoEstado, ['borrador', 'activa', 'implementada', 'finalizada'])) {
+                execute("UPDATE propuestas SET estado = ? WHERE id = ?", [$nuevoEstado, $propuestaId]);
+            }
+            if (!$imagen) {
+                setFlashMessage('Actualización agregada (sin imagen). Debug: ' . $debugInfo, 'info');
+            } else {
+                setFlashMessage('Actualización agregada exitosamente con imagen', 'success');
+            }
+            redirect('propuesta-detalle.php?id=' . $propuestaId . '#seguimiento');
+        } else {
+            setFlashMessage('Error al agregar seguimiento en BD', 'danger');
+        }
+    } else {
+        setFlashMessage('Debes completar título y descripción. Debug: ' . $debugInfo, 'warning');
+    }
+}
+
+// Obtener seguimientos si es propuesta ganadora
+$seguimientos = [];
+if ($propuesta['es_ganadora'] == 1) {
+    $seguimientos = getSeguimientosByPropuesta($propuestaId);
+}
+
 // Procesar like en comentario
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'like') {
     $comentarioId = $_POST['comentario_id'] ?? 0;
@@ -66,7 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-$yaVoto = hasVoted(getUserId(), $propuestaId);
 $comentarios = getComentariosByPropuesta($propuestaId);
 
 include 'includes/header.php';
@@ -164,6 +214,143 @@ include 'includes/header.php';
                     </div>
                 </div>
             </div>
+            
+            <!-- Seguimiento de Propuesta Ganadora -->
+            <?php if ($propuesta['es_ganadora'] == 1): ?>
+            <div class="card mb-4" id="seguimiento">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-clipboard-check"></i> Seguimiento de la Propuesta
+                        <span class="badge bg-warning text-dark ms-2">
+                            <i class="bi bi-trophy-fill"></i> Ganadora
+                        </span>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        Esta propuesta ganó la votación y está en proceso de implementación. 
+                        Aquí puedes ver las actualizaciones del progreso.
+                    </div>
+                    
+                    <?php if (isAdmin()): ?>
+                    <!-- Formulario para agregar seguimiento (solo admins) -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-plus-circle"></i> Agregar Actualización de Seguimiento
+                            </h5>
+                            <form method="POST" enctype="multipart/form-data">
+                                <input type="hidden" name="action" value="agregar_seguimiento">
+                                
+                                <div class="mb-3">
+                                    <label for="titulo" class="form-label fw-bold">Título de la Actualización *</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="titulo" 
+                                           name="titulo" 
+                                           required
+                                           maxlength="255"
+                                           placeholder="Ej: Inicio de obras - Fase 1">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="descripcion" class="form-label fw-bold">Descripción *</label>
+                                    <textarea class="form-control" 
+                                              id="descripcion" 
+                                              name="descripcion" 
+                                              rows="4" 
+                                              required
+                                              placeholder="Describe el progreso, los avances, o cualquier novedad importante..."></textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="estado_propuesta" class="form-label fw-bold">Estado de la Propuesta *</label>
+                                    <select class="form-select" id="estado_propuesta" name="estado_propuesta" required>
+                                        <option value="borrador" <?php echo $propuesta['estado'] === 'borrador' ? 'selected' : ''; ?>>Borrador</option>
+                                        <option value="activa" <?php echo $propuesta['estado'] === 'activa' ? 'selected' : ''; ?>>Activa</option>
+                                        <option value="implementada" <?php echo $propuesta['estado'] === 'implementada' ? 'selected' : ''; ?>>Implementada</option>
+                                        <option value="finalizada" <?php echo $propuesta['estado'] === 'finalizada' ? 'selected' : ''; ?>>Finalizada</option>
+                                    </select>
+                                    <small class="text-muted">Actualiza el estado según el progreso actual</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="imagen" class="form-label fw-bold">Imagen (opcional)</label>
+                                    <input type="file" 
+                                           class="form-control" 
+                                           id="imagen" 
+                                           name="imagen" 
+                                           accept="image/*">
+                                    <small class="text-muted">Formatos: JPG, PNG, GIF. Máx: 50MB</small>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check-circle"></i> Publicar Actualización
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <!-- Timeline de Seguimientos -->
+                    <?php if (empty($seguimientos)): ?>
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-clipboard" style="font-size: 3rem;"></i>
+                            <p class="mt-2">Aún no hay actualizaciones de seguimiento</p>
+                            <?php if (isAdmin()): ?>
+                                <small>Como administrador, puedes agregar la primera actualización usando el formulario arriba</small>
+                            <?php endif; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="timeline">
+                            <?php foreach ($seguimientos as $index => $seg): ?>
+                                <div class="seguimiento-box <?php echo $index === 0 ? 'seguimiento-latest' : ''; ?>">
+                                    <div class="seguimiento-timeline-icon">
+                                        <i class="bi bi-<?php echo $index === 0 ? 'star-fill' : 'circle-fill'; ?>"></i>
+                                    </div>
+                                    
+                                    <div class="row g-0 align-items-start">
+                                        <!-- Contenido del seguimiento -->
+                                        <div class="<?php echo $seg['imagen'] ? 'col-md-7' : 'col-12'; ?>">
+                                            <div class="seguimiento-content">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <div>
+                                                        <h5 class="mb-1 fw-bold"><?php echo htmlspecialchars($seg['titulo']); ?></h5>
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-calendar"></i> 
+                                                            <?php echo date('d/m/Y H:i', strtotime($seg['fecha_actualizacion'])); ?>
+                                                            • <i class="bi bi-person"></i> 
+                                                            <?php echo htmlspecialchars($seg['autor_nombre']); ?>
+                                                        </small>
+                                                    </div>
+                                                    <?php if ($index === 0): ?>
+                                                        <span class="badge bg-success">Más reciente</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                
+                                                <p class="mb-0"><?php echo nl2br(htmlspecialchars($seg['descripcion'])); ?></p>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Imagen del seguimiento (si existe) -->
+                                        <?php if ($seg['imagen']): ?>
+                                        <div class="col-md-5">
+                                            <div class="seguimiento-image">
+                                                <img src="uploads/<?php echo $seg['imagen']; ?>" 
+                                                     class="img-fluid rounded-end" 
+                                                     alt="<?php echo htmlspecialchars($seg['titulo']); ?>">
+                                            </div>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
             
             <!-- Comentarios -->
             <div class="card" id="comentarios">
@@ -281,37 +468,69 @@ include 'includes/header.php';
         
         <!-- Sidebar -->
         <div class="col-lg-4">
-            <!-- Botón de voto -->
-            <?php if ($propuesta['estado'] === 'activa' && $propuesta['dias_restantes'] > 0): ?>
-                <div class="card mb-4">
+            <!-- Estado de Votación -->
+            <?php if ($votacionActiva): ?>
+                <div class="card mb-4 border-primary">
                     <div class="card-body text-center">
-                        <?php if ($yaVoto): ?>
-                            <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
-                            <h4 class="mt-3 mb-3">¡Ya Votaste!</h4>
-                            <p class="text-muted">Gracias por tu participación</p>
-                            <button class="btn btn-secondary w-100" disabled>
-                                <i class="bi bi-check2-circle"></i> Voto Registrado
-                            </button>
+                        <?php if ($yaVotoEnVotacion): ?>
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                            <h4 class="mt-3 mb-2">¡Ya Votaste!</h4>
+                            <p class="text-muted mb-3">Ya has votado en esta votación</p>
+                            <a href="votaciones.php?id=<?php echo $votacionActiva['id']; ?>" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-eye"></i> Ver Resultados
+                            </a>
                         <?php else: ?>
-                            <i class="bi bi-hand-thumbs-up text-primary" style="font-size: 4rem;"></i>
-                            <h4 class="mt-3 mb-3">¿Apoyas esta propuesta?</h4>
-                            <p class="text-muted mb-3">Tu voto ayudará a priorizar esta iniciativa</p>
-                            <form method="POST" action="" onsubmit="return confirm('¿Confirmas tu voto por esta propuesta?')">
-                                <input type="hidden" name="action" value="votar">
-                                <button type="submit" class="btn btn-vote btn-lg w-100">
-                                    <i class="bi bi-hand-thumbs-up"></i> Votar Ahora
-                                    <br><small>(+<?php echo PUNTOS_VOTO; ?> puntos)</small>
-                                </button>
-                            </form>
+                            <i class="bi bi-box-arrow-in-right text-primary" style="font-size: 4rem;"></i>
+                            <h4 class="mt-3 mb-2">Votación Activa</h4>
+                            <p class="text-muted mb-3">Esta propuesta está en una votación activa</p>
+                            <div class="alert alert-info mb-3 text-start">
+                                <small>
+                                    <i class="bi bi-info-circle"></i> 
+                                    <strong><?php echo htmlspecialchars($votacionActiva['titulo']); ?></strong><br>
+                                    Participa y gana <?php echo PUNTOS_VOTO; ?> puntos
+                                </small>
+                            </div>
+                            <a href="votaciones.php?id=<?php echo $votacionActiva['id']; ?>" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-box-arrow-in-right"></i> Ir a Votación
+                            </a>
                         <?php endif; ?>
                     </div>
                 </div>
-            <?php else: ?>
+            <?php elseif ($propuesta['archivada']): ?>
+                <div class="card mb-4 bg-secondary text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-archive" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3">Propuesta Archivada</h5>
+                        <p class="mb-0">Esta propuesta ha sido archivada</p>
+                        <?php if ($propuesta['veces_usada_votacion'] > 0): ?>
+                            <small class="mt-2 d-block">Participó en <?php echo $propuesta['veces_usada_votacion']; ?> votación(es)</small>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php elseif ($propuesta['estado'] === 'implementada'): ?>
+                <div class="card mb-4 bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-trophy-fill" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3">Propuesta Implementada</h5>
+                        <p class="mb-0">Esta propuesta ganó una votación y está siendo implementada</p>
+                    </div>
+                </div>
+            <?php elseif ($propuesta['estado'] === 'finalizada'): ?>
                 <div class="card mb-4 bg-light">
                     <div class="card-body text-center">
-                        <i class="bi bi-exclamation-circle text-warning" style="font-size: 3rem;"></i>
-                        <h5 class="mt-3">Votación Finalizada</h5>
-                        <p class="text-muted mb-0">Esta propuesta ya no acepta votos</p>
+                        <i class="bi bi-clock-history text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3">Propuesta Finalizada</h5>
+                        <p class="text-muted mb-2">Esta propuesta ha finalizado</p>
+                        <small class="text-muted">Puede ser incluida en una votación próximamente</small>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="card mb-4">
+                    <div class="card-body text-center">
+                        <i class="bi bi-info-circle text-info" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3">Propuesta en Revisión</h5>
+                        <p class="text-muted mb-2">Esta propuesta está siendo evaluada</p>
+                        <small class="text-muted">Pronto podrá ser incluida en una votación</small>
                     </div>
                 </div>
             <?php endif; ?>
@@ -427,5 +646,113 @@ function compartir(red) {
     window.open(shareUrl, '_blank', 'width=600,height=400');
 }
 </script>
+
+<style>
+/* Estilos para Seguimiento */
+.timeline {
+    position: relative;
+    padding-left: 0;
+}
+
+.seguimiento-box {
+    position: relative;
+    padding-left: 60px;
+    padding-bottom: 40px;
+    border-left: 3px solid #dee2e6;
+    margin-left: 20px;
+}
+
+.seguimiento-box:last-child {
+    border-left-color: transparent;
+    padding-bottom: 0;
+}
+
+.seguimiento-timeline-icon {
+    position: absolute;
+    left: -14px;
+    top: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #198754;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border: 3px solid white;
+    box-shadow: 0 0 0 3px #198754;
+}
+
+.seguimiento-latest .seguimiento-timeline-icon {
+    background: #ffc107;
+    box-shadow: 0 0 0 3px #ffc107;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+    }
+}
+
+.seguimiento-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.seguimiento-content:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.seguimiento-latest .seguimiento-content {
+    border: 2px solid #ffc107;
+    background: #fffbf0;
+}
+
+.seguimiento-image {
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 100%;
+    width: 100%;
+}
+
+.seguimiento-image img {
+    transition: transform 0.3s ease;
+    object-fit: cover;
+    width: 100%;
+    max-height: 300px;
+    display: block;
+}
+
+.seguimiento-image img:hover {
+    transform: scale(1.02);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .seguimiento-box {
+        padding-left: 40px;
+        margin-left: 10px;
+    }
+    
+    .seguimiento-timeline-icon {
+        left: -12px;
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+    }
+}
+</style>
 
 <?php include 'includes/footer.php'; ?>

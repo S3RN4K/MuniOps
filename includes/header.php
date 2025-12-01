@@ -22,6 +22,12 @@
     <?php endif; ?>
 </head>
 <body>
+    <?php 
+    // Verificar y finalizar automáticamente votaciones vencidas
+    if (function_exists('checkAndFinalizarVotaciones')) {
+        checkAndFinalizarVotaciones();
+    }
+    ?>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
@@ -43,6 +49,11 @@
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo BASE_URL; ?>propuestas.php">
                                 <i class="bi bi-lightbulb"></i> Propuestas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?php echo BASE_URL; ?>votaciones.php">
+                                <i class="bi bi-box-arrow-in-right"></i> Votaciones
                             </a>
                         </li>
                         <li class="nav-item">

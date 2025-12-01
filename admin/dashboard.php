@@ -14,6 +14,8 @@ $totalPropuestas = fetchOne("SELECT COUNT(*) as total FROM propuestas")['total']
 $propuestasActivas = fetchOne("SELECT COUNT(*) as total FROM propuestas WHERE estado = 'activa'")['total'];
 $totalVotos = fetchOne("SELECT COUNT(*) as total FROM votos")['total'];
 $totalComentarios = fetchOne("SELECT COUNT(*) as total FROM comentarios")['total'];
+$totalVotaciones = fetchOne("SELECT COUNT(*) as total FROM votaciones")['total'];
+$votacionesActivas = fetchOne("SELECT COUNT(*) as total FROM votaciones WHERE estado = 'activa'")['total'];
 
 // Propuestas recientes
 $propuestasRecientes = fetchAll("SELECT * FROM propuestas ORDER BY fecha_creacion DESC LIMIT 5");
@@ -34,6 +36,9 @@ include '../includes/header.php';
                 </a>
                 <a href="propuestas.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-lightbulb"></i> Propuestas
+                </a>
+                <a href="votaciones.php" class="list-group-item list-group-item-action">
+                    <i class="bi bi-box-arrow-in-right"></i> Votaciones
                 </a>
                 <a href="usuarios.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-people"></i> Usuarios
@@ -116,6 +121,45 @@ include '../includes/header.php';
                                     <h2 class="fw-bold mb-0"><?php echo number_format($totalComentarios); ?></h2>
                                 </div>
                                 <i class="bi bi-chat" style="font-size: 3rem; opacity: 0.3;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Segunda fila de estadísticas -->
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-gradient-purple text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Votaciones</h6>
+                                    <h2 class="fw-bold mb-0"><?php echo number_format($totalVotaciones); ?></h2>
+                                    <small><?php echo $votacionesActivas; ?> activas</small>
+                                </div>
+                                <i class="bi bi-box-arrow-in-right" style="font-size: 3rem; opacity: 0.3;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-dark text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Acceso Rápido</h6>
+                                    <div class="mt-2">
+                                        <a href="votaciones.php?action=create" class="btn btn-light btn-sm me-2">
+                                            <i class="bi bi-plus"></i> Nueva Votación
+                                        </a>
+                                        <a href="votaciones.php" class="btn btn-outline-light btn-sm">
+                                            <i class="bi bi-list"></i> Ver Votaciones
+                                        </a>
+                                    </div>
+                                </div>
+                                <i class="bi bi-lightning" style="font-size: 3rem; opacity: 0.3;"></i>
                             </div>
                         </div>
                     </div>

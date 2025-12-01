@@ -343,3 +343,41 @@ main {
 .categoria-deporte { background-color: #6610f2; }
 .categoria-cultura { background-color: #d63384; }
 .categoria-otros { background-color: #6c757d; }
+
+/* Votaciones */
+.bg-gradient-purple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.propuesta-votacion {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.propuesta-votacion:hover {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.propuesta-votacion.border-success {
+    box-shadow: 0 0 20px rgba(25, 135, 84, 0.5);
+}
+
+.votacion-stat {
+    padding: 15px;
+    border-radius: 10px;
+    background: #f8f9fa;
+    margin-bottom: 15px;
+}
+
+.votacion-stat i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.progress-bar-votacion {
+    height: 30px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 30px;
+}
+

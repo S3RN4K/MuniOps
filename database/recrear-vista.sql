@@ -1,4 +1,4 @@
--- Recrear la vista propuestas_estadisticas con municipio_id
+-- Recrear la vista propuestas_estadisticas con municipio_id y es_ganadora
 
 DROP VIEW IF EXISTS propuestas_estadisticas;
 
@@ -17,6 +17,8 @@ SELECT
     p.creado_por,
     p.fecha_creacion,
     p.total_votos,
+    p.archivada,
+    p.es_ganadora,
     u.nombres as creado_por_nombre,
     COALESCE(u.apellido_paterno, '') as creado_por_apellido,
     (SELECT COUNT(*) FROM votos WHERE propuesta_id = p.id) as total_votos_actual,

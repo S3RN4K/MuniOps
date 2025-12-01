@@ -28,11 +28,12 @@ if ($categoria !== 'todas') {
 }
 
 if ($estado !== 'todas') {
-    $sql .= " AND estado = ?";
+    // Incluir propuestas ganadoras independientemente del filtro de estado
+    $sql .= " AND (estado = ? OR es_ganadora = 1)";
     $params[] = $estado;
 }
 
-$sql .= " ORDER BY fecha_inicio DESC";
+$sql .= " ORDER BY es_ganadora DESC, fecha_inicio DESC";
 
 $propuestas = fetchAll($sql, $params);
 
@@ -139,6 +140,12 @@ include 'includes/header.php';
                                 <?php echo $categorias[$propuesta['categoria']] ?? 'Otros'; ?>
                             </span>
                             
+                            <?php if ($propuesta['es_ganadora'] == 1): ?>
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-trophy-fill"></i> Ganadora
+                                </span>
+                            <?php endif; ?>
+                            
                             <?php if ($propuesta['estado'] === 'activa'): ?>
                                 <span class="badge bg-success">
                                     <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i> Activa
@@ -186,15 +193,21 @@ include 'includes/header.php';
                         </div>
                         
                         <div class="mt-auto">
-                            <?php if ($propuesta['estado'] === 'activa' && $propuesta['dias_restantes'] > 0): ?>
-                                <?php if (hasVoted(getUserId(), $propuesta['id'])): ?>
-                                    <button class="btn btn-secondary w-100" disabled>
-                                        <i class="bi bi-check2-circle"></i> Ya Votaste
-                                    </button>
+                            <?php 
+                            // Verificar si hay votación activa para esta propuesta
+                            $votacionActiva = getVotacionActivaByPropuesta($propuesta['id']);
+                            ?>
+                            
+                            <?php if ($votacionActiva): ?>
+                                <?php if (hasVotedInVotacion(getUserId(), $votacionActiva['id'])): ?>
+                                    <a href="votaciones.php?id=<?php echo $votacionActiva['id']; ?>" 
+                                       class="btn btn-outline-success w-100">
+                                        <i class="bi bi-check-circle-fill"></i> Ver Votación
+                                    </a>
                                 <?php else: ?>
-                                    <a href="propuesta-detalle.php?id=<?php echo $propuesta['id']; ?>" 
-                                       class="btn btn-vote w-100">
-                                        <i class="bi bi-hand-thumbs-up"></i> Votar Ahora
+                                    <a href="votaciones.php?id=<?php echo $votacionActiva['id']; ?>" 
+                                       class="btn btn-primary w-100">
+                                        <i class="bi bi-box-arrow-in-right"></i> Ir a Votación
                                     </a>
                                 <?php endif; ?>
                             <?php else: ?>
