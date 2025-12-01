@@ -30,7 +30,10 @@ $filtroRol = $_GET['rol'] ?? 'todos';
 $filtroEstado = $_GET['estado'] ?? 'todos';
 
 $sql = "SELECT u.*, 
-        (SELECT COUNT(*) FROM votos WHERE usuario_id = u.id) as total_votos,
+        (
+            (SELECT COUNT(*) FROM votos WHERE usuario_id = u.id) + 
+            (SELECT COUNT(*) FROM votacion_votos WHERE usuario_id = u.id)
+        ) as total_votos,
         (SELECT COUNT(*) FROM comentarios WHERE usuario_id = u.id) as total_comentarios
         FROM usuarios u
         WHERE 1=1";
@@ -72,9 +75,11 @@ include '../includes/header.php';
                 <a href="reportes.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-graph-up"></i> Reportes
                 </a>
+                <?php /* TEMPORALMENTE OCULTO - Funcionalidad en desarrollo
                 <a href="configuracion.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-gear"></i> Configuración
                 </a>
+                */ ?>
                 <hr>
                 <a href="../index.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-arrow-left"></i> Volver al Sitio

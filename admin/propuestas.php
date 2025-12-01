@@ -39,6 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $imagen = null;
                 if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
                     $imagen = uploadImage($_FILES['imagen'], 'propuestas');
+                } elseif ($_POST['action'] === 'update' && isset($_POST['imagen_actual'])) {
+                    // Mantener la imagen anterior si no se sube una nueva
+                    $imagen = $_POST['imagen_actual'];
                 }
                 
                 $data = [
@@ -121,9 +124,11 @@ include '../includes/header.php';
                 <a href="reportes.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-graph-up"></i> Reportes
                 </a>
+                <?php /* TEMPORALMENTE OCULTO - Funcionalidad en desarrollo
                 <a href="configuracion.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-gear"></i> Configuración
                 </a>
+                */ ?>
                 <hr>
                 <a href="../index.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-arrow-left"></i> Volver al Sitio
@@ -257,6 +262,7 @@ include '../includes/header.php';
                             <input type="hidden" name="action" value="<?php echo $action === 'create' ? 'create' : 'update'; ?>">
                             <?php if ($action === 'edit'): ?>
                                 <input type="hidden" name="propuesta_id" value="<?php echo $propuesta['id']; ?>">
+                                <input type="hidden" name="imagen_actual" value="<?php echo $propuesta['imagen'] ?? ''; ?>">
                             <?php endif; ?>
                             
                             <div class="row">

@@ -15,13 +15,17 @@ SELECT
     p.estado,
     p.creado_por,
     p.fecha_creacion,
-    p.total_votos,
     p.archivada,
     p.fecha_archivo,
     p.veces_usada_votacion,
     p.es_ganadora,
     u.nombres AS creado_por_nombre,
     COALESCE(u.apellido_paterno, '') AS creado_por_apellido,
+    -- Contar votos directos (tabla votos) + votos en votaciones (votacion_votos)
+    (
+        (SELECT COUNT(*) FROM votos WHERE votos.propuesta_id = p.id) + 
+        (SELECT COUNT(*) FROM votacion_votos WHERE votacion_votos.propuesta_id = p.id)
+    ) AS total_votos,
     (SELECT COUNT(*) FROM votos WHERE votos.propuesta_id = p.id) AS total_votos_actual,
     (SELECT COUNT(*) FROM comentarios WHERE comentarios.propuesta_id = p.id AND comentarios.comentario_padre_id IS NULL) AS total_comentarios,
     DATEDIFF(p.fecha_fin, NOW()) AS dias_restantes,

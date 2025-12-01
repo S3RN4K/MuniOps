@@ -104,7 +104,7 @@ function createPropuesta($data) {
 }
 
 function updatePropuesta($id, $data) {
-    $sql = "UPDATE propuestas SET titulo = ?, descripcion = ?, categoria = ?, municipio_id = ?,
+    $sql = "UPDATE propuestas SET titulo = ?, descripcion = ?, categoria = ?, imagen = ?, municipio_id = ?,
             presupuesto_estimado = ?, fecha_inicio = ?, fecha_fin = ?, estado = ? 
             WHERE id = ?";
     
@@ -112,6 +112,7 @@ function updatePropuesta($id, $data) {
         $data['titulo'],
         $data['descripcion'],
         $data['categoria'],
+        $data['imagen'] ?? null,
         $data['municipio_id'] ?? null,
         $data['presupuesto_estimado'] ?? null,
         $data['fecha_inicio'],
@@ -611,6 +612,13 @@ function registerVotoVotacion($votacionId, $propuestaId, $usuarioId) {
         // Registrar voto
         $stmt = $pdo->prepare("INSERT INTO votacion_votos (votacion_id, propuesta_id, usuario_id, ip_address) VALUES (?, ?, ?, ?)");
         $stmt->execute([$votacionId, $propuestaId, $usuarioId, $_SERVER['REMOTE_ADDR'] ?? null]);
+        
+        // Actualizar contador de votos en votacion_propuestas
+        execute("UPDATE votacion_propuestas SET votos_recibidos = votos_recibidos + 1 WHERE votacion_id = ? AND propuesta_id = ?", 
+            [$votacionId, $propuestaId]);
+        
+        // Actualizar contador total en votaciones
+        execute("UPDATE votaciones SET total_votos = total_votos + 1 WHERE id = ?", [$votacionId]);
         
         // Otorgar puntos
         addPoints($usuarioId, PUNTOS_VOTO, 'voto', 'Voto en votación: ' . $votacion['titulo'], $votacionId);

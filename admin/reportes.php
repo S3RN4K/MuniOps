@@ -9,15 +9,17 @@ requireAdmin();
 $pageTitle = 'Reportes - MuniOps';
 
 // Estadísticas generales
+$votosDirectos = fetchOne("SELECT COUNT(*) as total FROM votos")['total'];
+$votosVotaciones = fetchOne("SELECT COUNT(*) as total FROM votacion_votos")['total'];
 $stats = [
     'total_usuarios' => fetchOne("SELECT COUNT(*) as total FROM usuarios WHERE rol = 'ciudadano'")['total'],
     'total_propuestas' => fetchOne("SELECT COUNT(*) as total FROM propuestas")['total'],
-    'total_votos' => fetchOne("SELECT COUNT(*) as total FROM votos")['total'],
+    'total_votos' => $votosDirectos + $votosVotaciones,
     'total_comentarios' => fetchOne("SELECT COUNT(*) as total FROM comentarios")['total'],
 ];
 
-// Propuestas más votadas
-$propuestasMasVotadas = fetchAll("SELECT * FROM propuestas ORDER BY total_votos DESC LIMIT 10");
+// Propuestas más votadas (usar vista que calcula votos correctamente)
+$propuestasMasVotadas = fetchAll("SELECT * FROM propuestas_estadisticas ORDER BY total_votos DESC LIMIT 10");
 
 // Usuarios más activos
 $usuariosMasActivos = fetchAll("SELECT * FROM ranking_usuarios LIMIT 10");
@@ -25,11 +27,14 @@ $usuariosMasActivos = fetchAll("SELECT * FROM ranking_usuarios LIMIT 10");
 // Actividad por categoría
 $actividadPorCategoria = fetchAll("
     SELECT 
-        categoria,
+        p.categoria,
         COUNT(*) as total_propuestas,
-        SUM(total_votos) as total_votos
-    FROM propuestas
-    GROUP BY categoria
+        SUM(
+            (SELECT COUNT(*) FROM votos WHERE votos.propuesta_id = p.id) + 
+            (SELECT COUNT(*) FROM votacion_votos WHERE votacion_votos.propuesta_id = p.id)
+        ) as total_votos
+    FROM propuestas p
+    GROUP BY p.categoria
     ORDER BY total_votos DESC
 ");
 
@@ -56,9 +61,11 @@ include '../includes/header.php';
                 <a href="reportes.php" class="list-group-item list-group-item-action active">
                     <i class="bi bi-graph-up"></i> Reportes
                 </a>
+                <?php /* TEMPORALMENTE OCULTO - Funcionalidad en desarrollo
                 <a href="configuracion.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-gear"></i> Configuración
                 </a>
+                */ ?>
                 <hr>
                 <a href="../index.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-arrow-left"></i> Volver al Sitio

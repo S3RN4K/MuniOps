@@ -8,7 +8,10 @@ $pageTitle = 'Inicio - MuniOps';
 // Obtener estadísticas
 $totalUsuarios = fetchOne("SELECT COUNT(*) as total FROM usuarios WHERE rol = 'ciudadano'")['total'];
 $totalPropuestas = fetchOne("SELECT COUNT(*) as total FROM propuestas WHERE estado = 'activa'")['total'];
-$totalVotos = fetchOne("SELECT COUNT(*) as total FROM votos")['total'];
+// Contar votos directos antiguos + votos en votaciones
+$votosDirectos = fetchOne("SELECT COUNT(*) as total FROM votos")['total'];
+$votosVotaciones = fetchOne("SELECT COUNT(*) as total FROM votacion_votos")['total'];
+$totalVotos = $votosDirectos + $votosVotaciones;
 
 // Obtener propuestas activas
 $propuestasActivas = getActivePropuestas(3);

@@ -12,7 +12,10 @@ $pageTitle = 'Dashboard Admin - MuniOps';
 $totalUsuarios = fetchOne("SELECT COUNT(*) as total FROM usuarios WHERE rol = 'ciudadano'")['total'];
 $totalPropuestas = fetchOne("SELECT COUNT(*) as total FROM propuestas")['total'];
 $propuestasActivas = fetchOne("SELECT COUNT(*) as total FROM propuestas WHERE estado = 'activa'")['total'];
-$totalVotos = fetchOne("SELECT COUNT(*) as total FROM votos")['total'];
+// Contar votos directos + votos en votaciones
+$votosDirectos = fetchOne("SELECT COUNT(*) as total FROM votos")['total'];
+$votosVotaciones = fetchOne("SELECT COUNT(*) as total FROM votacion_votos")['total'];
+$totalVotos = $votosDirectos + $votosVotaciones;
 $totalComentarios = fetchOne("SELECT COUNT(*) as total FROM comentarios")['total'];
 $totalVotaciones = fetchOne("SELECT COUNT(*) as total FROM votaciones")['total'];
 $votacionesActivas = fetchOne("SELECT COUNT(*) as total FROM votaciones WHERE estado = 'activa'")['total'];
@@ -46,9 +49,11 @@ include '../includes/header.php';
                 <a href="reportes.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-graph-up"></i> Reportes
                 </a>
+                <?php /* TEMPORALMENTE OCULTO - Funcionalidad en desarrollo
                 <a href="configuracion.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-gear"></i> Configuración
                 </a>
+                */ ?>
                 <hr>
                 <a href="../index.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-arrow-left"></i> Volver al Sitio

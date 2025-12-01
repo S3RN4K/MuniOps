@@ -107,9 +107,11 @@ include '../includes/header.php';
                 <a href="reportes.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-graph-up"></i> Reportes
                 </a>
+                <?php /* TEMPORALMENTE OCULTO - Funcionalidad en desarrollo
                 <a href="configuracion.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-gear"></i> Configuración
                 </a>
+                */ ?>
                 <hr>
                 <a href="../index.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-arrow-left"></i> Volver al Sitio
